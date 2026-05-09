@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Autonomous Operations Command Center
 
-## Getting Started
+Project 8 in the AI Career Portfolio.
 
-First, run the development server:
+This project simulates an AI operational workforce that actively routes business issues, creates execution queues, flags risks, updates workflow states, coordinates agents, and prepares executive visibility.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Core Purpose
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Move beyond static AI dashboards into autonomous operational execution simulation.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Business input becomes:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- agent routing
+- workflow coordination
+- operational action queues
+- risk and escalation tracking
+- live execution visibility
+- executive summaries
+- cross-system state movement
 
-## Learn More
+## Key Features
 
-To learn more about Next.js, take a look at the following resources:
+- Operations Intake Layer
+- 3D Agent Coordination Network
+- Live Workflow Routing
+- Operational Queue Dashboard
+- Risk and Escalation Layer
+- Autonomous Action Center
+- Cross-System Coordination Map
+- Live Metrics and Forecasting
+- Expandable 3D inspection modals
+- Floating Operations AI assistant
+- Draggable workflow nodes
+- Interactive agent and graph inspection
+- Real-time execution simulation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Technology Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- GSAP
+- Three.js
+- React Three Fiber
+- Drei
+- Chart.js
+- Zustand
+- SortableJS
+- Interact.js
+- Vercel
 
-## Deploy on Vercel
+## Portfolio Goal
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project demonstrates AI Solutions Engineering, autonomous operations thinking, multi-agent workflow coordination, enterprise UI architecture, and operational systems design.

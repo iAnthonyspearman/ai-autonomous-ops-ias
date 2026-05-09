@@ -1,6 +1,6 @@
 {
-  "name": "starter-pack",
-  "version": "0.1.0",
+  "name": "ai-autonomous-ops-ias",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

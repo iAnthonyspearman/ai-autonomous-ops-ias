@@ -537,10 +537,16 @@ function AgentConnection({
   const curve = useMemo(() => {
     const start = new THREE.Vector3(...from);
     const end = new THREE.Vector3(...to);
-    const midpoint = start.clone().lerp(end, 0.5);
-    midpoint.z += 0.18;
-    midpoint.y += 0.08;
-    return new THREE.CatmullRomCurve3([start, midpoint, end]);
+    const span = start.distanceTo(end);
+    const firstBend = start.clone().lerp(end, 0.34);
+    const secondBend = start.clone().lerp(end, 0.68);
+
+    firstBend.z += 0.18 + span * 0.075;
+    firstBend.y += 0.08 + span * 0.035;
+    secondBend.z -= 0.04 + span * 0.03;
+    secondBend.y += 0.14 + span * 0.025;
+
+    return new THREE.CatmullRomCurve3([start, firstBend, secondBend, end]);
   }, [from, to]);
 
   useFrame((state) => {
@@ -554,7 +560,7 @@ function AgentConnection({
   return (
     <group>
       <mesh>
-        <tubeGeometry args={[curve, 48, active ? 0.018 : 0.012, 10, false]} />
+        <tubeGeometry args={[curve, 72, active ? 0.02 : 0.012, 12, false]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
@@ -567,15 +573,15 @@ function AgentConnection({
       </mesh>
 
       <DreiLine
-        points={[from, to]}
+        points={curve.getPoints(36)}
         color="#ffffff"
-        lineWidth={0.65}
+        lineWidth={0.7}
         transparent
-        opacity={active ? 0.22 : 0.08}
+        opacity={active ? 0.24 : 0.08}
       />
 
       <mesh ref={pulse}>
-        <sphereGeometry args={[0.045, 20, 20]} />
+        <sphereGeometry args={[active ? 0.056 : 0.044, 24, 24]} />
         <meshStandardMaterial
           color="#ffffff"
           emissive={color}
@@ -603,6 +609,8 @@ function AgentOrb({
 }) {
   const group = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
+  const verticalRing = useRef<THREE.Mesh>(null);
+  const halo = useRef<THREE.Mesh>(null);
 
   const rimColor = useMemo(() => {
     const c = new THREE.Color(color);
@@ -628,6 +636,16 @@ function AgentOrb({
       ring.current.rotation.z += delta * (active ? 0.8 : 0.25);
       ring.current.rotation.x += delta * 0.18;
     }
+
+    if (verticalRing.current) {
+      verticalRing.current.rotation.y -= delta * (active ? 0.55 : 0.18);
+      verticalRing.current.rotation.z += delta * 0.12;
+    }
+
+    if (halo.current) {
+      const pulse = active ? 1.48 + Math.sin(Date.now() * 0.002 + index) * 0.05 : 1.34;
+      halo.current.scale.setScalar(pulse);
+    }
   });
 
   return (
@@ -651,19 +669,32 @@ function AgentOrb({
         <meshBasicMaterial color="#ffffff" wireframe transparent opacity={active ? 0.18 : 0.08} />
       </mesh>
 
-      <mesh scale={1.36}>
-        <sphereGeometry args={[0.17, 28, 28]} />
-        <meshBasicMaterial color={color} transparent opacity={active ? 0.12 : 0.055} />
+      <mesh ref={halo} scale={1.4}>
+        <sphereGeometry args={[0.2, 32, 32]} />
+        <meshBasicMaterial color={color} transparent opacity={active ? 0.15 : 0.06} />
       </mesh>
 
       <mesh ref={ring} rotation={[1.1, 0.32, 0.45]}>
-        <torusGeometry args={[0.255, 0.009, 16, 90]} />
+        <torusGeometry args={[0.34, 0.011, 16, 110]} />
         <meshStandardMaterial
           color={rimColor}
           emissive={rimColor}
           emissiveIntensity={active ? 1.35 : 0.55}
           metalness={0.62}
           roughness={0.2}
+        />
+      </mesh>
+
+      <mesh ref={verticalRing} rotation={[0.1, 1.25, 0.22]}>
+        <torusGeometry args={[0.4, 0.007, 12, 96]} />
+        <meshStandardMaterial
+          color="#ffffff"
+          emissive={rimColor}
+          emissiveIntensity={active ? 0.7 : 0.26}
+          metalness={0.55}
+          roughness={0.24}
+          transparent
+          opacity={active ? 0.44 : 0.18}
         />
       </mesh>
 
@@ -686,8 +717,8 @@ function AgentOrb({
       </mesh>
 
       <Text
-        position={[0, -0.43, 0]}
-        fontSize={0.065}
+        position={[0, -0.52, 0.03]}
+        fontSize={0.074}
         color="rgba(255,255,255,.72)"
         anchorX="center"
         anchorY="middle"
@@ -698,41 +729,120 @@ function AgentOrb({
   );
 }
 
+function CoordinationCore({ running, progress }: { running: boolean; progress: number }) {
+  const core = useRef<THREE.Mesh>(null);
+  const shell = useRef<THREE.Mesh>(null);
+  const ringOne = useRef<THREE.Mesh>(null);
+  const ringTwo = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (core.current) {
+      core.current.rotation.x += delta * (running ? 0.58 : 0.22);
+      core.current.rotation.y += delta * (running ? 0.76 : 0.28);
+    }
+
+    if (shell.current) {
+      shell.current.rotation.y -= delta * 0.16;
+      shell.current.rotation.z += delta * 0.08;
+    }
+
+    if (ringOne.current) ringOne.current.rotation.z += delta * (running ? 0.68 : 0.22);
+    if (ringTwo.current) ringTwo.current.rotation.x += delta * (running ? 0.46 : 0.18);
+  });
+
+  const intensity = running || progress >= 100 ? 1 : 0.58;
+
+  return (
+    <group position={[0, 0.05, 0]}>
+      <mesh ref={shell} scale={1.15}>
+        <icosahedronGeometry args={[0.62, 2]} />
+        <meshBasicMaterial color="#34d399" wireframe transparent opacity={0.11} />
+      </mesh>
+
+      <mesh ref={core} castShadow receiveShadow>
+        <octahedronGeometry args={[0.32, 2]} />
+        <meshPhysicalMaterial
+          color="#34d399"
+          emissive="#34d399"
+          emissiveIntensity={0.38 * intensity}
+          metalness={0.82}
+          roughness={0.18}
+          clearcoat={1}
+          clearcoatRoughness={0.12}
+        />
+      </mesh>
+
+      <mesh ref={ringOne} rotation={[1.18, 0.1, 0.3]}>
+        <torusGeometry args={[0.72, 0.009, 14, 120]} />
+        <meshStandardMaterial color="#34d399" emissive="#34d399" emissiveIntensity={0.9 * intensity} transparent opacity={0.62} />
+      </mesh>
+
+      <mesh ref={ringTwo} rotation={[0.1, 1.28, 0.1]}>
+        <torusGeometry args={[0.92, 0.007, 14, 120]} />
+        <meshStandardMaterial color="#e879f9" emissive="#e879f9" emissiveIntensity={0.62 * intensity} transparent opacity={0.42} />
+      </mesh>
+
+      <pointLight color="#34d399" intensity={1.3 * intensity} distance={4.8} />
+    </group>
+  );
+}
+
+function NetworkFloor({ running }: { running: boolean }) {
+  const ring = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (ring.current) ring.current.rotation.z += delta * (running ? 0.055 : 0.018);
+  });
+
+  return (
+    <group position={[0, -1.72, 0]}>
+      <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.8, 3.95, 128]} />
+        <meshBasicMaterial color="#34d399" transparent opacity={0.105} side={THREE.DoubleSide} />
+      </mesh>
+      <gridHelper args={[7.8, 20, "#134e4a", "#111827"]} />
+    </group>
+  );
+}
+
 function AgentNetwork({ running, progress }: { running: boolean; progress: number }) {
   const activeIndex = Math.min(5, Math.floor(progress / 18));
 
   const points: [number, number, number][] = [
-    [-1.65, 0.82, 0.05],
-    [-0.58, 1.18, -0.08],
-    [0.72, 0.84, 0.08],
-    [1.55, -0.12, -0.06],
-    [0.38, -1.06, 0.1],
-    [-1.36, -0.72, -0.08],
+    [-2.2, 1.05, -0.32],
+    [-0.76, 1.5, 0.48],
+    [0.92, 1.05, -0.56],
+    [2.22, -0.02, 0.34],
+    [0.58, -1.22, -0.24],
+    [-1.82, -0.78, 0.42],
   ];
 
   return (
-    <Canvas shadows camera={{ position: [0, 0, 4.6], fov: 43 }}>
+    <Canvas shadows camera={{ position: [0, 0.42, 5.35], fov: 46 }}>
       <color attach="background" args={["#050712"]} />
-      <fog attach="fog" args={["#050712", 4.8, 8.8]} />
+      <fog attach="fog" args={["#050712", 5.3, 9.6]} />
 
-      <ambientLight intensity={0.32} />
-      <directionalLight position={[-3.2, 3.8, 4]} intensity={1.55} color="#ffffff" castShadow />
+      <ambientLight intensity={0.38} />
+      <directionalLight position={[-4.2, 4.4, 5.6]} intensity={1.75} color="#ffffff" castShadow />
       <spotLight
-        position={[2.6, 3.2, 3.2]}
-        angle={0.42}
+        position={[3.4, 3.8, 4.7]}
+        angle={0.38}
         penumbra={0.7}
-        intensity={3.1}
+        intensity={3.55}
         color="#34d399"
         castShadow
       />
-      <pointLight position={[-2.5, -1.8, 2.2]} intensity={1.35} color="#e879f9" />
-      <pointLight position={[2.4, -1.6, 1.8]} intensity={1.15} color="#fbbf24" />
+      <pointLight position={[-3.2, -1.9, 2.8]} intensity={1.7} color="#e879f9" />
+      <pointLight position={[3.1, -1.7, 2.4]} intensity={1.35} color="#fbbf24" />
 
       <Environment preset="city" />
-      <Stars radius={52} depth={22} count={680} factor={3} saturation={0} fade speed={0.42} />
-      <DreiSparkles count={34} scale={[3.2, 2.2, 1.2]} size={1.7} speed={0.2} color="#34d399" />
+      <Stars radius={58} depth={28} count={840} factor={3.1} saturation={0} fade speed={0.38} />
+      <DreiSparkles count={48} scale={[4.6, 2.9, 2.1]} size={1.9} speed={0.22} color="#34d399" />
+      <NetworkFloor running={running} />
 
-      <Float speed={1.15} rotationIntensity={0.18} floatIntensity={0.55}>
+      <Float speed={1.05} rotationIntensity={0.16} floatIntensity={0.46}>
+        <CoordinationCore running={running} progress={progress} />
+
         {points.map((point, index) => {
           const active = running ? index <= activeIndex : index < 2 || progress >= 100;
           return (
@@ -765,26 +875,26 @@ function AgentNetwork({ running, progress }: { running: boolean; progress: numbe
         <DreiLine
           points={[points[0], points[2], points[4], points[0]]}
           color="#ffffff"
-          lineWidth={0.8}
+          lineWidth={0.9}
           transparent
-          opacity={0.16}
+          opacity={0.18}
         />
 
         <DreiLine
           points={[points[1], points[3], points[5], points[1]]}
           color="#e879f9"
-          lineWidth={0.8}
+          lineWidth={0.9}
           transparent
-          opacity={0.18}
+          opacity={0.2}
         />
       </Float>
 
       <ContactShadows
-        position={[0, -1.55, 0]}
-        opacity={0.32}
-        scale={4.4}
-        blur={2.6}
-        far={4}
+        position={[0, -1.72, 0]}
+        opacity={0.38}
+        scale={6.4}
+        blur={3}
+        far={5.2}
         color="#000000"
       />
 
@@ -792,7 +902,9 @@ function AgentNetwork({ running, progress }: { running: boolean; progress: numbe
         enableZoom={false}
         enablePan={false}
         autoRotate
-        autoRotateSpeed={running ? 0.72 : 0.28}
+        autoRotateSpeed={running ? 0.58 : 0.22}
+        maxPolarAngle={Math.PI / 1.72}
+        minPolarAngle={Math.PI / 3.9}
       />
     </Canvas>
   );
@@ -1283,7 +1395,7 @@ export default function Home() {
                   ],
                 })
               }
-              className="agent-network-upgrade h-[330px] w-full overflow-hidden rounded-3xl border border-white/10 bg-black/30 text-left transition hover:border-emerald-300/40"
+              className="agent-network-upgrade h-[430px] w-full overflow-hidden rounded-3xl border border-white/10 bg-black/30 text-left transition hover:border-emerald-300/40 md:h-[500px]"
             >
               <AgentNetwork running={running} progress={progress} />
             </button>
